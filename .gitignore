@@ -1,6 +1,9 @@
 # Ignore all
 *
 
+# Ignore txt files
+!*.txt
+
 # Unignore all with extensions and Makefiles
 !*.*
 !Makefile*
