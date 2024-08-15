@@ -1,110 +1,139 @@
+from gevent import monkey
+
+monkey.patch_all()
+
 import os
+
 import numpy as np
-from locust import HttpUser, task, between
-from requests.auth import HTTPBasicAuth
 import urllib3
+from locust import HttpUser, between, task
+from requests.auth import HTTPBasicAuth
 
 # Global constants
 URL = "https://localhost"
 NAME_ROOT = "user"
 PASSWORD_ROOT = "PassaparolaSuperSegreta"
 FILE = "testfile.txt"
-KB = "1KB.txt"
-MB = "1MB.txt"
-GB = "1GB.txt"
-RATIO = {
-    "download": 3, 
-    "1KB": 3, 
-    "1MB": 2, 
-    "1GB": 1
-}
 
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-class CloudUser(HttpUser):
+
+# User class for the Nextcloud locust test
+# NOTE: Depending on your lsp configuration, you might get the error
+# 'No parameter named "name"' in the functions below. However, such parameter
+# is helpful to name and group the requests in the locust web interface.
+class NextcloudUser(HttpUser):
+    """User class for the Nextcloud locust test"""
 
     # Wait time between tasks
-    wait_time = between(1, 1)
+    wait_time = between(1, 3)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.user_id = None
+    # User attributes
+    user_id = None
+    name = None
+    password = None
+    auth = None
+    counter = 0
 
     # User selector on start
     def on_start(self):
-        # Random user selection
-        self.user_id = self.environment.runner.user_count
+        self.user_id = np.random.randint(1, 50)
         self.name = f"{NAME_ROOT}{self.user_id}"
         self.password = f"{PASSWORD_ROOT}{self.user_id}"
         self.auth = HTTPBasicAuth(self.name, self.password)
-        self.login()
+        self.counter = 0
 
-    # Login task
-    def login(self):
-        self.client.post(
-            "/index.php/login",
-            data={"user": self.name, "password": self.password},
-            name="Login",
-            verify=False,
-        )
-
-    # Download task
-    @task(RATIO["download"])
-    def download(self, filename=FILE):
+    @task(5)
+    def download(self):
+        """Download a file from the server"""
         response = self.client.get(
-            f"{URL}/remote.php/dav/files/{self.name}/{filename}",
+            f"https://localhost/remote.php/dav/files/{self.name}/{FILE}",
             name="Download",
             auth=self.auth,
             allow_redirects=True,
             verify=False,
         )
         if response.status_code == 200:
-            # Rename the downloaded file and save it
-            downloadname = filename.split(".")[0]
-            downloadname = f"downloads/{downloadname}{self.user_id}.txt"
-            with open(downloadname, "wb") as file:
+            with open(
+                f"downloads/doenload_{self.name}_{self.counter}.txt", "wb"
+            ) as file:
                 file.write(response.content)
+        self.counter += 1
 
-    # Upload task
-    def upload(self, filename):
-        # Upload path
-        uploadname = filename.split(".")[0]
-        uploadname = f"/remote.php/dav/files/{self.name}/{uploadname}-{np.random.randint(0, 100)}.txt"
-
-        # Upload
-        with open(f"uploads/{filename}", "rb") as file:
-            self.client.put(
-                uploadname,
-                data=file,
-                name="Upload",
-                auth=self.auth,
-                verify=False,
-            )
-
-        # Delete uploaded file (cleanup)
-        self.client.delete(
-            uploadname,
-            name="Delete",
+    @task(10)
+    def read(self):
+        """Read a file from the server"""
+        self.client.get(
+            f"/remote.php/dav/files/{self.name}/{FILE}",
+            name="Read",
             auth=self.auth,
             verify=False,
         )
 
-    # Upload 1KB task
-    @task(RATIO["1KB"])
-    def upload_1KB(self):
-        self.upload(KB)
+    @task(10)
+    def upload_one_kb(self):
+        """Upload a 1KB file to the server"""
+        with open("uploads/1KB.txt", "rb") as file:
+            response = self.client.put(
+                f"/remote.php/dav/files/{self.name}/1KB_{self.counter}.txt",
+                name="Upload 1KB",
+                data=file,
+                auth=self.auth,
+                verify=False,
+            )
+        if response.status_code == 200:
+            self.client.delete(
+                f"/remote.php/dav/files/{self.name}/1KB_{self.counter}.txt",
+                name="Delete 1KB",
+                auth=self.auth,
+                verify=False,
+            )
+            self.counter += 1
 
-    # Upload 1MB task
-    @task(RATIO["1MB"])
-    def upload_1MB(self):
-        self.upload(MB)
+    @task(5)
+    def upload_one_mb(self):
+        """Upload a 1MB file to the server"""
+        with open("uploads/1MB.txt", "rb") as file:
+            response = self.client.put(
+                f"/remote.php/dav/files/{self.name}/1MB_{self.counter}.txt",
+                name="Upload 1MB",
+                data=file,
+                auth=self.auth,
+                verify=False,
+            )
+        if response.status_code == 200:
+            self.client.delete(
+                f"/remote.php/dav/files/{self.name}/1MB_{self.counter}.txt",
+                name="Delete 1MB",
+                auth=self.auth,
+                verify=False,
+            )
+            self.counter += 1
 
-    # Upload 1GB task
-    @task(RATIO["1GB"])
-    def upload_1GB(self):
-        self.upload(GB)
+    @task(1)
+    def upload_one_gb(self):
+        """Upload a 1GB file to the server"""
+        with open("uploads/1GB.txt", "rb") as file:
+            response = self.client.put(
+                f"/remote.php/dav/files/{self.name}/1GB_{self.counter}.txt",
+                name="Upload 1GB",
+                data=file,
+                auth=self.auth,
+                timeout=600,
+                verify=False,
+            )
+        if response.status_code == 200:
+            self.client.delete(
+                f"/remote.php/dav/files/{self.name}/1GB_{self.counter}.txt",
+                name="Delete 1GB",
+                auth=self.auth,
+                timeout=600,
+                verify=False,
+            )
+            self.counter += 1
+
 
 # Perform the test if executed as main
 if __name__ == "__main__":
-        os.system(f"locust -f locustfile.py --host {URL}")
+    os.system(f"locust -f locustfile.py --host {URL}")

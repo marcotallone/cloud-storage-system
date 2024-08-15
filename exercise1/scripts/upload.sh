@@ -2,14 +2,14 @@
 
 # Variables
 URL="https://localhost"
-BIN="bin"
+DIR="scripts"
 FILE="testfile.txt"
 N=1
 NAME_ROOT="user"
 PASSWORD_ROOT="PassaparolaSuperSegreta"
 
 # Check if we are in the right place
-if [ ! -d "$BIN" ]; then
+if [ ! -d "$DIR" ]; then
     echo "⛔ ERROR: You must run this command from the project's root folder."
     exit 1
 fi
@@ -31,8 +31,8 @@ if [ $# -eq 2 ]; then
 fi
 
 # Check that the file exists in the bin folder
-if ! [ -f "$BIN/$FILE" ]; then
-    echo "⛔ ERROR: The file $BIN/$FILE does not exist. Try running get_file.sh first."        
+if ! [ -f "$DIR/$FILE" ]; then
+    echo "⛔ ERROR: The file $DIR/$FILE does not exist. Try running get_file.sh first."        
     exit 1
 fi
 
@@ -40,16 +40,16 @@ echo ""
 echo "🚀 Uploading files..."
 
 # Upload file inside the container /var/ folder
-docker cp $BIN/$FILE app:/var/www/html/$FILE
+docker cp $DIR/$FILE app:/var/www/html/$FILE
 
 # Upload file for each user
 for i in $(seq $N); do
     NAME="${NAME_ROOT}${i}"
     PASSWORD="${PASSWORD_ROOT}${i}"
-    curl -k -u $NAME:$PASSWORD -X PUT -T $BIN/$FILE $URL/remote.php/dav/files/$NAME/$FILE
+    curl -k -u $NAME:$PASSWORD -X PUT -T $DIR/$FILE $URL/remote.php/dav/files/$NAME/$FILE
     if [ $? -eq 0 ]; then
-        echo "✅ Upload of file $BIN/$FILE for user $NAME was successful."
+        echo "✅ Upload of file $DIR/$FILE for user $NAME was successful."
     else
-        echo "⛔ ERROR: Upload of file $BIN/$FILE for user $NAME failed."      
+        echo "⛔ ERROR: Upload of file $DIR/$FILE for user $NAME failed."      
     fi
 done

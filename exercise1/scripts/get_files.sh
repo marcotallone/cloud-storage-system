@@ -2,16 +2,20 @@
 
 # File Size (kB)
 SIZE=1
-BIN="bin"
+DIR="scripts"
 
 # Check if we are in the right place
-if [ ! -d "$BIN" ]; then
+if [ ! -d "$DIR" ]; then
     echo "⛔ ERROR: You must run this command from the project's root folder."
     exit 1
 fi
 
-# Create a 1kB file in the folder ./test/uploads/ and in the ./bin/ folder
-dd if=/dev/zero of=bin/testfile.txt bs=1024 count=$SIZE
+# Create the ./test/uploads/ and ./test/downloads/ folders
+mkdir -p test/uploads
+mkdir -p test/downloads
+
+# Create a 1kB file in the folder ./test/uploads/ and in the ./scripts/ folder
+dd if=/dev/zero of=$DIR/testfile.txt bs=1024 count=$SIZE
 dd if=/dev/zero of=test/uploads/testfile.txt bs=1024 count=$SIZE
 dd if=/dev/zero of=test/uploads/1KB.txt bs=1024 count=$SIZE
 

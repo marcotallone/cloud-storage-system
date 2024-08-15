@@ -2,13 +2,13 @@
 
 # Variables
 URL="https://localhost"
-BIN="bin"
+DIR="scripts"
 N=1
 NAME_ROOT="user"
 PASSWORD_ROOT="PassaparolaSuperSegreta"
 
 # Check if we are in the right place
-if [ ! -d "$BIN" ]; then
+if [ ! -d "$DIR" ]; then
     echo "⛔ ERROR: You must run this command from the project's root folder."
     exit 1
 fi
