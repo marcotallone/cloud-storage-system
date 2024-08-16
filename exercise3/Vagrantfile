@@ -1,0 +1,76 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Nodes
+nodes = [
+  { :hostname => "k01", :ip => "192.168.133.80" },
+  { :hostname => "k02", :ip => "192.168.133.81" },
+]
+
+Vagrant.configure("2") do |config|
+  
+  # Base box and provider
+  config.vm.box = "fedora/39-cloud-base"
+  config.vm.provider :libvirt do |lv|
+    lv.qemu_use_session = false
+    lv.memory = 2048
+    lv.cpus = 2
+  end
+
+  # Provisioning
+  nodes.each do |conf|
+    config.vm.define conf[:hostname] do |node|
+
+      # Hostname, disable synced folder and network
+      node.vm.hostname = conf[:hostname]
+      node.vm.synced_folder ".", "/vagrant", disabled: true
+      node.vm.network :private_network,
+                      :libvirt__network_name => 'kub-devel'
+
+      # Common provisioning
+      node.vm.provision :shell,
+                        :path => './scripts/0_common.sh',
+                        :args => [ conf[:ip] ]
+
+      # Docker files
+      node.vm.provision :file,
+                        :source => "./docker",
+                        :destination => "/home/vagrant/"
+
+      # Master node provisioning
+      if conf[:hostname] == "k01"
+        node.vm.provision :shell,
+                          :path => './scripts/1_master.sh',
+                          :privileged => true
+        node.vm.provision :file,
+                          :source => "./scripts/flannel.sh",
+                          :destination => "/home/vagrant/"
+        node.vm.provision :file,
+                          :source => "./scripts/mpi.sh",
+                          :destination => "/home/vagrant/"
+        node.vm.provision :file,
+                          :source => "./benchmarks",
+                          :destination => "/home/vagrant/"
+      end
+
+      # Worker node provisioning
+      if conf[:hostname] == "k02"
+        node.vm.provision :shell,
+                          :path => './scripts/2_worker.sh',
+                          :privileged => true
+      end
+
+      # Copy credentials for non-root user
+      node.vm.provision :shell,
+                        :path => './scripts/3_credentials.sh',
+                        :privileged => true
+
+      # Install docker MPI images
+      node.vm.provision :shell,
+                        :path => './scripts/4_docker.sh',
+                        :privileged => true
+
+    end
+  end
+
+end
