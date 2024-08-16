@@ -8,6 +8,10 @@
 !*.*
 !Makefile*
 
+# Unignore Caddyfile and Vagrantfile
+!Caddyfile*
+!Vagrantfile*
+
 # Unignore all dirs
 !*/
 
@@ -182,7 +186,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+# .env
 .venv
 env/
 venv/

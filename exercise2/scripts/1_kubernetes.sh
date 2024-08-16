@@ -32,7 +32,6 @@ setenforce 0
 sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 
 # Kubernetes Installation
-
 cat << EOF | tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
@@ -63,4 +62,12 @@ kubeadm init --pod-network-cidr=10.17.0.0/16
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
-alias k=kubectl
+
+# Write kubectl alias (k) to the .bashrc file
+echo "alias k=kubectl" >> /root/.bashrc
+
+# Persistent volumes directories
+mkdir -p /home/vagrant/volumes
+mkdir -p /home/vagrant/volumes/nextcloud
+mkdir -p /home/vagrant/volumes/postgresql
+sudo chown -R vagrant:vagrant /home/vagrant/volumes # Change the owner of the directories

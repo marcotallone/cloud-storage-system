@@ -1,0 +1,194 @@
+# Image and Version
+image:
+  repository: nextcloud
+  flavor: fpm
+  tag: 29.0.3-fpm
+
+# Number of pods to deploy
+replicaCount: 1
+
+# Nextcloud service values
+nextcloud:
+  host: nextcloud.local
+  existingSecret:
+    enabled: true
+    secretName: nextcloud-secret
+    usernameKey: username
+    passwordKey: password
+    tokenKey: token
+  trustedDomains: []
+  datadir: /var/www/html/data
+  strategy:
+    type: Recreate
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    existingClaim: nextcloud-pvc
+    size: 5Gi
+
+# Database configuration for postgresql
+internalDatabase:
+  enabled: false
+
+externalDatabase:
+  enabled: true
+  type: postgresql
+  host: localhost:5432
+  existingSecret:
+    enabled: true
+    secretName: postgresql-secret
+    usernameKey: postgresql-username
+    passwordKey: postgresql-password
+    rootPasswordKey: postgresql-root-password
+    databaseKey: database
+    hostKey: host
+
+postgresql:
+  enabled: true
+  image:
+    tag: 16.3.0
+  global:
+    postgresql:
+      auth:
+        existingSecret: postgresql-secret
+        secretKeys:
+          usernameKey: postgresql-username
+          userPasswordKey: postgresql-password
+          adminPasswordKey: postgresql-root-password
+          databaseKey: database
+          hostKey: host
+  primary:
+    persistence:
+      enabled: true
+      accessMode: ReadWriteOnce
+      existingClaim: postgresql-pvc
+      size: 5Gi
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  existingClaim: nextcloud-pvc
+  size: 5Gi
+
+# Nginx configuration
+nginx:
+  enabled: true
+  image:
+    repository: nginx
+    tag: 1.27.0-alpine
+  containerPort: 80
+
+# Redis cache configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    existingSecret: redis-secret
+    existingSecretPasswordKey: redis-password
+  architecture: standalone # https://github.com/bitnami/charts/tree/main/bitnami/redis#redis-common-configuration-parameters
+  master:
+    enabled: true
+    persistence:
+      enabled: false
+    replicas: 0
+  replica:
+    enabled: false
+    persistence:
+      enabled: false
+    replicas: 0
+
+# Cronjob sidecar container
+cronjob:
+  enabled: true
+  resources: {}
+
+# Probes (with default values taken from documentation)
+startupProbe:
+  enabled: false
+  # initialDelaySeconds: 30   # only if you enable it
+  # periodSeconds: 10         #
+  # timeoutSeconds: 5         #
+  # failureThreshold: 30      #
+  # successThreshold: 1       #
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+# Horizontal Pod Autoscaler (HPA)
+hpa:
+  enabled: true
+  cputhreshold: 60
+  minPods: 1
+  maxPods: 10
+
+# MetalLB Loadbalancer service
+service:
+  type: LoadBalancer
+  port: 8080
+  externalTrafficPolicy: Local
+  annotations:
+    metallb.universe.tf/address-pool: first-pool
+
+# Ingress configuration
+phpClientHttpsFix:
+  enabled: true # Sets OVERWRITEPROTOCOL for https ingress redirect
+  protocol: https
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - nextcloud.local
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For"
+    nginx.ingress.kubernetes.io/server-snippet: |-
+      server_tokens off;
+      proxy_hide_header X-Powered-By;
+      rewrite ^/.well-known/webfinger /index.php/.well-known/webfinger last;
+      rewrite ^/.well-known/nodeinfo /index.php/.well-known/nodeinfo last;
+      rewrite ^/.well-known/host-meta /public.php?service=host-meta last;
+      rewrite ^/.well-known/host-meta.json /public.php?service=host-meta-json;
+      location = /.well-known/carddav {
+        return 301 $scheme://$host/remote.php/dav;
+      }
+      location = /.well-known/caldav {
+        return 301 $scheme://$host/remote.php/dav;
+      }
+      location = /robots.txt {
+        allow all;
+        log_not_found off;
+        access_log off;
+      }
+      location ~ ^/(?:build|tests|config|lib|3rdparty|templates|data)/ {
+        deny all;
+      }
+      location ~ ^/(?:autotest|occ|issue|indie|db_|console) {
+        deny all;
+      }
+
+# Metrics (Optional)
+# Start Prometheus metrics exporter
+# metrics:
+#   enabled: true
+#   replicaCount: 1
+#   image:
+#     repository: xperimental/nextcloud-exporter
+#   ServiceMonitor:
+#     enabled: true
+#     namespace: nextcloud
+#     namespaceSelector: nextcloud
+#     interval: 30s

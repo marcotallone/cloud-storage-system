@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 if [[ $(nmcli -t c show  | grep "Wired connection 2" | wc -l) -ne 0 ]]; then
 nmcli c del "Wired connection 2";
