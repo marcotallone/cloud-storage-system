@@ -85,7 +85,7 @@ redis:
     enabled: true
     existingSecret: redis-secret
     existingSecretPasswordKey: redis-password
-  architecture: standalone
+  architecture: standalone # https://github.com/bitnami/charts/tree/main/bitnami/redis#redis-common-configuration-parameters
   master:
     enabled: true
     persistence:
@@ -135,13 +135,12 @@ hpa:
   maxPods: 10
 
 # MetalLB Loadbalancer service
-# NOTE: comment this if you intend to use the ingress controller
-service:
-  type: LoadBalancer
-  port: 8080
-  externalTrafficPolicy: Local
-  annotations:
-    metallb.universe.tf/address-pool: first-pool
+# service:
+#   type: LoadBalancer
+#   port: 8080
+#   externalTrafficPolicy: Local
+#   annotations:
+#     metallb.universe.tf/address-pool: first-pool
 
 # Ingress configuration
 phpClientHttpsFix:
@@ -153,43 +152,43 @@ ingress:
   className: nginx
   hosts:
     - nextcloud.local
-  annotations:
-    nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For"
-    nginx.ingress.kubernetes.io/server-snippet: |-
-      server_tokens off;
-      proxy_hide_header X-Powered-By;
-      rewrite ^/.well-known/webfinger /index.php/.well-known/webfinger last;
-      rewrite ^/.well-known/nodeinfo /index.php/.well-known/nodeinfo last;
-      rewrite ^/.well-known/host-meta /public.php?service=host-meta last;
-      rewrite ^/.well-known/host-meta.json /public.php?service=host-meta-json;
-      location = /.well-known/carddav {
-        return 301 $scheme://$host/remote.php/dav;
-      }
-      location = /.well-known/caldav {
-        return 301 $scheme://$host/remote.php/dav;
-      }
-      location = /robots.txt {
-        allow all;
-        log_not_found off;
-        access_log off;
-      }
-      location ~ ^/(?:build|tests|config|lib|3rdparty|templates|data)/ {
-        deny all;
-      }
-      location ~ ^/(?:autotest|occ|issue|indie|db_|console) {
-        deny all;
-      }
+  # annotations:
+  #   nginx.ingress.kubernetes.io/enable-cors: "true"
+  #   nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For"
+  #   nginx.ingress.kubernetes.io/server-snippet: |-
+  #     server_tokens off;
+  #     proxy_hide_header X-Powered-By;
+  #     rewrite ^/.well-known/webfinger /index.php/.well-known/webfinger last;
+  #     rewrite ^/.well-known/nodeinfo /index.php/.well-known/nodeinfo last;
+  #     rewrite ^/.well-known/host-meta /public.php?service=host-meta last;
+  #     rewrite ^/.well-known/host-meta.json /public.php?service=host-meta-json;
+  #     location = /.well-known/carddav {
+  #       return 301 $scheme://$host/remote.php/dav;
+  #     }
+  #     location = /.well-known/caldav {
+  #       return 301 $scheme://$host/remote.php/dav;
+  #     }
+  #     location = /robots.txt {
+  #       allow all;
+  #       log_not_found off;
+  #       access_log off;
+  #     }
+  #     location ~ ^/(?:build|tests|config|lib|3rdparty|templates|data)/ {
+  #       deny all;
+  #     }
+  #     location ~ ^/(?:autotest|occ|issue|indie|db_|console) {
+  #       deny all;
+  #     }
 
 # Metrics (Optional)
 # Start Prometheus metrics exporter
-metrics:
-  enabled: true
-  replicaCount: 1
-  image:
-    repository: xperimental/nextcloud-exporter
-  ServiceMonitor:
-    enabled: true
-    namespace: nextcloud
-    namespaceSelector: nextcloud
-    interval: 30s
+# metrics:
+#   enabled: true
+#   replicaCount: 1
+#   image:
+#     repository: xperimental/nextcloud-exporter
+#   ServiceMonitor:
+#     enabled: true
+#     namespace: nextcloud
+#     namespaceSelector: nextcloud
+#     interval: 30s
