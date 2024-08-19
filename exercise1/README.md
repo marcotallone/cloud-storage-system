@@ -6,25 +6,25 @@ This file contains practical instructions to set-up and run the cloud-based file
 All the required files are contained in this directory, which is organized in
 the following way:
 
-```zsh
- .
-├──  .env # Environment variables
-├──  docker-compose.yaml # Docker compose file
-├──  README.md # This file
-├──  results # Results of the locust test
-├──  scripts # Scripts to interact with the system
-│  ├──  add_users.sh
-│  ├──  clean_files.sh
-│  ├──  get_files.sh
-│  ├──  init.sh
-│  ├──  remove_users.sh
-│  ├──  testfile.txt
-│  └──  upload.sh
-├──  test # Locust test files
-│  └──  locustfile.py
-└──  web # Configuration files for proxy servers
-   ├──  Caddyfile
-   └──  nginx.conf
+```bash
+📁 .
+├── 📄 .env # Environment variables
+├── 📄 docker-compose.yaml # Docker compose file
+├── 📜 README.md # This file
+├── 📁 results # Results of the locust test
+├── 📁 scripts # Scripts to interact with the system
+│  ├── add_users.sh
+│  ├── clean_files.sh
+│  ├── get_files.sh
+│  ├── init.sh
+│  ├── remove_users.sh
+│  ├── 📄 testfile.txt
+│  └── upload.sh
+├── 📁 test # Locust test files
+│  └── 🐍 locustfile.py
+└── 📁 web # Configuration files for proxy servers
+   ├── 📄 Caddyfile
+   └── ⚙ nginx.conf
 ```
 
 ## Requirements
@@ -40,7 +40,7 @@ The following software is required to run the cloud-based file storage system:
 The installation phase is simplified thanks to Docker Compose. To install the
 system, it's sufficient to run the following command:
 
-```zsh
+```bash
 docker-compose up -d
 ```
 
@@ -69,11 +69,12 @@ The default admnistrator credentials are:
 But they can eventually be changes by modifying the associated environment
 variables in the `.env` file.
 
-> [!WARNING] Depending on the web browser used, a warning message might be shown when accessing the Nextcloud interface. This is due to the self-signed SSL certificate managed by the Caddy server.
+>[!WARNING]
+>Depending on the web browser used, a warning message might be shown when accessing the Nextcloud interface. This is due to the self-signed SSL certificate managed by the Caddy server.
 
 To stop the system, the following command can be used:
 
-```zsh
+```bash
 docker-compose down
 ```
 
@@ -88,22 +89,21 @@ First of all, it's necessary to generate some files to test the upload and
 download capabilities of the system. The provided `get_files.sh` script can be
 run to generate files of different sizes (*respectively 1 kB, 1 MB and 1 GB*). In particular by running:
 
-```zsh
+```bash
 ./scripts/get_files.sh
 ```
 
 from this directory, the relative files will be created in the `test/uploads`
 and `test/downloads` folders.
 
->[!NOTE] It's possible to test the system with files bigger than 1 GB, but this
->requires to adjust the `client_max_body_size` parameter accordingly in the
->`nginx.conf` file.
+>[!NOTE]
+>It's possible to test the system with files bigger than 1 GB, but this requires to adjust the `client_max_body_size` parameter accordingly in the `nginx.conf` file.
 
 Then the system must be populated with users. For this task, first make sure
 that the docker containers are up and running with `docker ps` and then it's possible to
 run:
 
-```zsh
+```bash
 ./scripts/init.sh
 ```
 
@@ -112,7 +112,7 @@ instance and upload for each of them a test file. The default number of users
 can be tweaked by changing the associated variable at the beginning of the script.\
 It's then possible to conduct the test by running:
 
-```zsh
+```bash
 cd test
 python locustfile.py
 ```
@@ -121,4 +121,5 @@ and then visiting the provided URL, by default:
 
 > <http://localhost:8089>
 
-> [!WARNING] Remember to enter the test directory before running the locust test.
+>[!WARNING] 
+>Remember to enter the test directory before running the locust test.

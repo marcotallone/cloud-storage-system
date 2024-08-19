@@ -7,36 +7,38 @@ the [OSU Benchmark](https://mvapich.cse.ohio-state.edu/benchmarks/) test in a Ku
 All the necessary files are provided in this folder, which follows the following
 structure:
 
-```zsh
- .
-├──  benchmarks # OSU Benchmark files and results
-│  ├──  bcast-one-node.yaml
-│  ├──  bcast-two-nodes.yaml
-│  ├──  benchmark.sh
-│  ├──  convert.py
-│  ├──  p2p-one-node.yaml
-│  ├──  p2p-two-nodes.yaml
-│  ├──  results.csv
-│  └──  results.txt
-├──  docker # Docker files
-│  ├──  Dockerfile
-│  ├──  openmpi-builder.Dockerfile
-│  ├──  openmpi.Dockerfile
-│  └──  osu-code-provider.Dockerfile
-├── 󰗀 kub-devel-network.xml # Network configuration file
-├──  network.sh
-├──  scripts # Vagrant provisioning scripts
-│  ├──  0_common.sh
-│  ├──  1_master.sh
-│  ├──  2_worker.sh
-│  ├──  3_credentials.sh
-│  ├──  4_docker.sh
-│  ├──  flannel.sh
-│  └──  mpi.sh
-├── 󰢬 ssh # SSH keys
-│  ├── 󰌆 id_rsa
-│  └── 󰷖 id_rsa.pub
-└── ⍱ Vagrantfile
+```bash
+📁 .
+├── 📁 benchmarks # OSU Benchmark files and results
+│  ├── 📄 bcast-one-node.yaml
+│  ├── 📄 bcast-two-nodes.yaml
+│  ├── benchmark.sh
+│  ├── 🐍 convert.py
+│  ├── 🐍 plot.ipynb
+│  ├── 📄 p2p-one-node.yaml
+│  ├── 📄 p2p-two-nodes.yaml
+│  ├── 🗃️ results.csv
+│  └── 📄 results.txt
+├── 🐳 docker # Docker files
+│  ├── 🐳 Dockerfile
+│  ├── openmpi-builder.Dockerfile
+│  ├── openmpi.Dockerfile
+│  └── osu-code-provider.Dockerfile
+├── 🌐 kub-devel-network.xml # Network configuration file
+├── network.sh
+├── 📜 README.md # This file
+├── 📁 scripts # Vagrant provisioning scripts
+│  ├── 0_common.sh
+│  ├── 1_master.sh
+│  ├── 2_worker.sh
+│  ├── 3_credentials.sh
+│  ├── 4_docker.sh
+│  ├── flannel.sh
+│  └── mpi.sh
+├── 📁 ssh # SSH keys
+│  ├── 🔑 id_rsa
+│  └── 🔑 id_rsa.pub
+└── 📜 Vagrantfile
 ```
 
 ## Requirements
@@ -47,11 +49,12 @@ The deployment of this project requires the following:
 - [Libvirt](https://libvirt.org/)
 - `vagrant-libvirt` plugin, which can be installed through the following command:
 
-```zsh
+```bash
 vagrant plugin install vagrant-libvirt
 ```
 
-> [!NOTE] For **Archlinux** users it might helpful to know that the libvirt plugin is not compatible with the ruby gems as currently shipped with the vagrant package in the Arch repos (which are up-to-date). This might cause an error such as Vagrant failed to properly resolve required dependencies. An alternative in order to use this plugin without such issues, is to use the container image via either Podman or Docker, as shown in the [official documentation](https://vagrant-libvirt.github.io/vagrant-libvirt/installation.html#docker--podman). Source: [Archwiki](https://wiki.archlinux.org/title/Vagrant) (July, 2024).
+>[!NOTE]
+>For **Archlinux** users it might helpful to know that the libvirt plugin is not compatible with the ruby gems as currently shipped with the vagrant package in the Arch repos (which are up-to-date). This might cause an error such as Vagrant failed to properly resolve required dependencies. An alternative in order to use this plugin without such issues, is to use the container image via either Podman or Docker, as shown in the [official documentation](https://vagrant-libvirt.github.io/vagrant-libvirt/installation.html#docker--podman). Source: [Archwiki](https://wiki.archlinux.org/title/Vagrant) (July, 2024).
 
 ## Installation
 
@@ -66,13 +69,13 @@ The installation phase consists in 3 steps:
 It's first necessary to define the network which can be done using the [provided
 script](./network.sh) and giving sudo priviledges:
 
-```zsh
+```bash
 ./network up
 ```
 
 Then, to deploy the Kubernetes cluster in the Vagrant virtual machines, run the following command:
 
-```zsh
+```bash
 vagrant up --no-parallel
 ```
 
@@ -83,14 +86,14 @@ the worker one.\
 Once the installation phase concludes, you can ssh into either node (`k01` or
 `k02`) with:
 
-```zsh
+```bash
 vagrant ssh k01
 # or vagrant ssh k02
 ```
 
 and then check the status of the cluster either with the `k9s` utility or by running:
 
-```zsh
+```bash
 [vagrant@k01 ~] kubectl get nodes
 ```
 
@@ -104,13 +107,13 @@ imported and compiled in the previous step (see the
 [`script/4_docker.sh`](./scripts/4_docker.sh) provisioning script). To check the
 existence of such container images on the virtual machines one can run:
 
-```zsh
+```bash
 [vagrant@k01 ~] podman images -a
 ```
 
 Having confirmed this, according to documentation, the MPI Operator can be installed by directly applying the dedicated manifests to the Kubernetes nodes. This task is simplified by running the provided [`mpi.sh`](./scripts/mpi.sh) script inside the master node (`k01`):
 
-```zsh
+```bash
 [vagrant@k01 ~] ./mpi.sh
 ```
 
@@ -120,20 +123,19 @@ The last step consists in deploying the flannel network to the Kubernetes
 cluster. This can be done by running the [dedicated
 script](./scripts/flannel.sh) on the master node:
 
-```zsh
+```bash
 [vagrant@k01 ~] ./flannel.sh
 ```
 
 After the deplyoment, it's necessary to reboot the virtual machine to apply the
 necessary changes. From your host machine, please run:
 
-```zsh
+```bash
 vagrant reload
 ```
 
-> [!WARNING] **Not rebooting** the virtual machines will lead to error messages
-> later displayed when running the benchmark tests, hence this step is strictly
-> necessary!
+>[!WARNING]
+>**Not rebooting** the virtual machines will lead to error messages later displayed when running the benchmark tests, hence this step is strictly necessary!
 
 ## Running the Benchmark
 
@@ -151,14 +153,14 @@ with two workers placed one per node
 
 The tests can be performed using the provided [`benchmark.sh`](./benchmarks/benchmark.sh) script. This script will run the tests and save the results in a `results.txt` file. To run the tests, simply run the following commandas:
 
-```zsh
+```bash
 [vagrant@k01 ~] cd benchmarks
 [vagrant@k01 ~/benchmarks] ./benchmark.sh <test-name.yaml>
 ```
 
 where `<test-name.yaml>` is the name of the test you want to run. For example, to run the point to point latency test with two workers on the same node, you would run:
 
-```zsh
+```bash
 [vagrant@k01 ~/benchmarks] ./benchmark.sh p2p-one-node.yaml
 ```
 
@@ -169,7 +171,7 @@ Results of the tests are then converted in `csv` format by the
 
 To clean up and remove the virtual machine once you are done, you can run:
 
-```zsh
+```bash
 vagrant destroy -f
 ```
 
