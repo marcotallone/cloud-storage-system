@@ -39,7 +39,7 @@
         <td><a href="./exercise3/"><strong>Exercise 3</strong></a></td>
     </table>
     <br />
-    <a href="./main.tex">View Demo</a>
+    <a href="./presentation.pdf">View Presentation</a>
     |
     <a href="https://github.com/marcotallone/notex/issues">Report Bug</a>
     |
